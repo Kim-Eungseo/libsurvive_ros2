@@ -59,7 +59,21 @@ def generate_launch_description():
         DeclareLaunchArgument('foxbridge', default_value='false',
                               description='Launch a foxglove bridge'),
         DeclareLaunchArgument('record', default_value='false',
-                              description='Record data with rosbag')]
+                              description='Record data with rosbag'),
+        DeclareLaunchArgument('world_frame', default_value='world',
+                              description='World frame name (parent of libsurvive_world)'),
+        DeclareLaunchArgument('world_x', default_value='0.0',
+                              description='X translation from world to libsurvive_world'),
+        DeclareLaunchArgument('world_y', default_value='0.0',
+                              description='Y translation from world to libsurvive_world'),
+        DeclareLaunchArgument('world_z', default_value='0.0',
+                              description='Z translation from world to libsurvive_world'),
+        DeclareLaunchArgument('world_roll', default_value='0.0',
+                              description='Roll rotation from world to libsurvive_world (radians)'),
+        DeclareLaunchArgument('world_pitch', default_value='0.0',
+                              description='Pitch rotation from world to libsurvive_world (radians)'),
+        DeclareLaunchArgument('world_yaw', default_value='0.0',
+                              description='Yaw rotation from world to libsurvive_world (radians)')]
 
     # Non-composable launch (regular node)
     libsurvive_node = Node(
@@ -128,6 +142,24 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('record')),
         output='log')
 
+    # Static transform from world frame to libsurvive_world frame
+    # This allows you to align the libsurvive coordinate system with your room
+    static_transform_publisher = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='world_to_libsurvive_broadcaster',
+        arguments=[
+            '--x', LaunchConfiguration('world_x'),
+            '--y', LaunchConfiguration('world_y'),
+            '--z', LaunchConfiguration('world_z'),
+            '--roll', LaunchConfiguration('world_roll'),
+            '--pitch', LaunchConfiguration('world_pitch'),
+            '--yaw', LaunchConfiguration('world_yaw'),
+            '--frame-id', LaunchConfiguration('world_frame'),
+            '--child-frame-id', 'libsurvive_world'
+        ],
+        output='log')
+
     return LaunchDescription(
         arguments + [
             libsurvive_node,
@@ -135,5 +167,6 @@ def generate_launch_description():
             foxbridge_node,
             rosbridge_node,
             rosapi_node,
-            bag_record_node
+            bag_record_node,
+            static_transform_publisher
         ])

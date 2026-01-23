@@ -26,9 +26,16 @@
 services:
   libsurvive_ros2:
     build: .
-    ports:
-      - 8765
-      - 9090
-    entrypoint: /home/ros/ros2_ws/entrypoint.sh
+    network_mode: host
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    privileged: true
+    user: root
+    volumes:
+      - ./calibration:/root/.config/libsurvive
+      - ./entrypoint_recalibrate.sh:/entrypoint_recalibrate.sh:ro
+    entrypoint: /entrypoint_recalibrate.sh
     working_dir: /home/ros/ros2_ws
     command: ros2 launch libsurvive_ros2 libsurvive_ros2.launch.py foxbridge:=true composable:=false
+    environment:
+      - RECALIBRATE=${RECALIBRATE:-false}
